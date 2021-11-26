@@ -1,0 +1,180 @@
+---
+title: "Analysis"
+author: "Aries Zhou"
+date: "11/18/2021"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+https://www.kaggle.com/tejashvi14/employee-future-prediction?select=Employee.csv
+
+```{r}
+library(dplyr)
+library(ggcorrplot)
+library(ggplot2)
+library(tidyverse)
+library(caret)
+library(randomForest)
+library(rpart)
+```
+
+```{r}
+emp <- read.csv('Employee.csv')
+
+str(emp)
+anyNA(emp)
+```
+
+```{r}
+summary(select(emp, where(is.integer)))
+
+emp$Education <- as.factor(emp$Education)
+emp$City <- as.factor(emp$City)
+emp$Gender <- as.factor(emp$Gender)
+emp$EverBenched <- as.factor(emp$EverBenched)
+
+levels(emp$Education)
+levels(emp$City)
+levels(emp$Gender)
+levels(emp$EverBenched)
+
+table(emp$LeaveOrNot)
+
+num <- lapply(select(emp, is.numeric),as.numeric) %>% as_tibble()
+
+# check correlations
+cor <- cor(num)
+
+# plot a correlation plot
+ggcorrplot(cor, hc.order = TRUE, type = "lower", lab = TRUE)
+
+emp$LeaveOrNot <- as.factor(emp$LeaveOrNot)
+```
+```{r}
+summary(select(emp, where(is.integer)))
+emp$LeaveOrNot <- as.factor(emp$LeaveOrNot)
+emp$Education <- as.factor(emp$Education)
+emp$City <- as.factor(emp$City)
+emp$Gender <- as.factor(emp$Gender)
+emp$EverBenched <- as.factor(emp$EverBenched)
+
+levels(emp$Education)
+levels(emp$City)
+levels(emp$Gender)
+levels(emp$EverBenched)
+```
+```{r}
+#count(num, ExperienceInCurrentDomain == 0)
+
+#plot <- num %>% mutate(Exp = if_else(ExperienceInCurrentDomain == 0, 'zero', 'non-zero'))
+#hist <- ggplot(data = plot, aes(x = ExperienceInCurrentDomain))
+#hist + geom_histogram(binwidth = 0.5, aes(fill = as.factor(Exp))) + 
+#      labs(x = 'Years of Experience in Current Field') + 
+#      scale_fill_discrete(name = 'Experience Status')
+
+bar <- ggplot(data = emp, aes(x = ExperienceInCurrentDomain))
+bar + geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
+      scale_fill_discrete()
+```
+
+```{r}
+emp_stat <- 
+  emp %>% 
+  group_by(LeaveOrNot, Gender) %>% #Education City EverBenched
+  summarize(Avg = mean(PaymentTier), 
+            Sd = sd(PaymentTier)) 
+
+as_tibble(emp_stat)
+```
+
+```{r}
+box <- ggplot(data = emp, aes(x = PaymentTier)) #Age ExperienceInCurrentDomain
+box + geom_boxplot(aes(y = Gender)) + 
+  geom_jitter(aes(x = PaymentTier, y = Gender, color = Gender)) +
+scale_color_discrete() + 
+coord_flip() 
+```
+```{r}
+# set seed
+set.seed(234)
+
+index <- createDataPartition(y = emp$LeaveOrNot, p = 0.75, list = F)
+train <- emp[index, ] # training set
+test <- emp[-index, ] # test set
+```
+
+```{r}
+# use repeated 10 fold cross-validation
+ctrl <- trainControl(method = "cv", number = 10)
+
+glm <- train(LeaveOrNot ~ ., data = train, method = "glm", 
+                family = "binomial", preProcess =c("center", "scale"), 
+                trControl = ctrl)
+glm
+summary(glm)
+```
+```{r, cache=TRUE}
+#set seed
+set.seed(236)
+
+# create dataframe for tuning parameter
+ct.tGrid <- expand.grid(cp = seq(from = 0, to = 0.1, by = 0.001))
+
+# train the Classification Tree model
+class.tree <- train(LeaveOrNot ~ ., data = train, 
+                    method = "rpart", trControl = ctrl, 
+                    preProcess = c("center", "scale"), 
+                    tuneGrid = ct.tGrid)
+class.tree
+ggplot(class.tree)
+
+```
+
+
+```{r, cache=TRUE}
+#set seed
+set.seed(238)
+
+# create dataframe for tuning parameter
+rf.tGrid <- expand.grid(mtry = seq(from = 1, to = 7, by = 1))
+
+# train the Random Forest model
+ran.forest <- train(LeaveOrNot ~ ., data = train, 
+                    method = "rf", trControl = ctrl, 
+                    preProcess = c("center", "scale"), 
+                    tuneGrid = rf.tGrid )
+ran.forest
+ggplot(ran.forest)
+
+```
+
+```{r}
+test.glm <- confusionMatrix(data = test$LeaveOrNot, reference = predict(glm, newdata = test)) 
+test.ct <- confusionMatrix(data = test$LeaveOrNot, reference = predict(class.tree, newdata = test)) 
+test.rf <- confusionMatrix(data = test$LeaveOrNot, reference = predict(ran.forest, newdata = test))
+
+all.compare <- data.frame(models= c("glm", "class.tree","ran.forest"), 
+                          Accuracy = c(test.glm$overall[1],
+                                       test.ct$overall[1], 
+                                       test.rf$overall[1]))
+knitr::kable(all.compare) 
+```
+
+
+
+```{r}
+select.fit <- all.compare %>% filter(Accuracy == max(Accuracy))
+select.fit
+model <- get(select.fit[[1]])
+pred <- predict(model, newdata = test, type = "prob")
+```
+
+
+
+
+
+
+
