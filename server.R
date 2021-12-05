@@ -72,7 +72,7 @@ shinyServer(function(input, output, session){
     })
     
     output$image <- renderImage({
-        filename <- normalizePath(file.path('job-hopping_ygkecr.png'))
+        filename <- normalizePath(file.path('aboutImage.png'))
         list(src = filename)
     }, deleteFile = FALSE)
     
