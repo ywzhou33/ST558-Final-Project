@@ -256,6 +256,43 @@ shinyServer(function(input, output, session){
 #            }
         } 
     })
+    
+    getSubdata <- reactive({ 
+        emp <- getAlldata()
+        subdata <- emp %>% filter(PaymentTier == input$varType)
+        subdata
+    })
+    
+    observeEvent(input$subset, {
+        if (input$subset) { 
+            output$dataTable <- renderDataTable({
+                getSubdata()
+            })
+            output$downloadData <- downloadHandler(
+                filename = function() {
+                    paste("subEmployee", ".csv", sep = "")
+                },
+                content = function(file) {
+                    write.csv(getSubdata(), file, row.names = FALSE)
+                }
+            )
+        } else {
+            output$dataTable <- renderDataTable({
+                getAlldata()
+            })
+            output$downloadData <- downloadHandler(
+                filename = function() {
+                    paste("fullEmployee", ".csv", sep = "")
+                },
+                content = function(file) {
+                    write.csv(getAlldata(), file, row.names = FALSE)
+                }
+            )
+            
+        }
+    })
+
+    
 })
 
 

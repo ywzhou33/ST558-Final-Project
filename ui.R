@@ -139,12 +139,16 @@ shinyUI(fluidPage(
         tabPanel("Dateset", fluid = TRUE,
             sidebarLayout(
                 sidebarPanel(
-                    radioButtons("var",
-                        h5("Choose a variable to filter data table:"),
-                            selected = "PaymentTier",
-                            choices = c("PaymentTier",
-                                        "Age",
-                                        "ExperienceInCurrentDomain")
+                    checkboxInput("subset", h5("Subset data on Payment Tier")
+                    ),
+                    br(),
+                    conditionalPanel(condition = "input.subset", 
+                                     selectizeInput("varType",
+                                                    h5("Choose a variable Type to filter data table:"),
+                                                    choices = c("Payment Tier 1" = "1",
+                                                                "Payment Tier 2" = "2",
+                                                                "Payment Tier 3" = "3"))
+                                     
                     ),
                     br(),
                     downloadButton("downloadData", "Download Data Table")
