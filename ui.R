@@ -75,17 +75,26 @@ shinyUI(fluidPage(
                                         "Select the Proportion of data to split:",
                                         min = 0,
                                         max = 1,
+                                        step = 0.05,
                                         value = 0.75),
                             br(),
-                            selectizeInput("modelType", 
-                                                     h5("Choose a Model Type:"),
-                                                     selected = "Generalized Linear Regression Model",
-                                                     choices = c("Generalized Linear Regression Model",
-                                                                 "Classification Tree",
-                                                                 "Random Forest")
-                            ),
+                            sliderInput("cv", 
+                                        h5("Select the number of folds for Cross Validation:"),
+                                        min = 3,
+                                        max = 10,
+                                        value = 10),
                             br(),
-                            #lm(as.formula(paste(input$dependent," ~ ",paste(input$independent,collapse="+"))),data=dat)
+                            numericInput("ctP", 
+                                         h5("Enter values of tuning parameter for Classification Tree"),
+                                         min = 0.001, max = 0.1, value = 0.001),
+                            br(),
+                            sliderInput("rfP", 
+                                        h5("Select the number of tuning parameter for Randon Forest"),
+                                        min = 3,
+                                        max = 15,
+                                        step = 1,
+                                        value = 3),
+                            br(),
                             checkboxGroupInput("modelVars", 
                                                 h5("Choose Predictors:"),
                                                 choices = c("Education",
@@ -98,10 +107,22 @@ shinyUI(fluidPage(
                                                 "ExperienceInCurrentDomain")
                             ),
                             br(),
-                            actionButton("train", "Train Model")
+                            actionButton("train", "Train Model"),
+                            br(),
+                            actionButton("test", "Test and Compare Models")
                         ),
                         mainPanel(fluidRow(
-                            verbatimTextOutput("glm")
+                            textOutput("warning"),
+                            htmlOutput("head1"),
+                            tableOutput("comTable"),
+                            h3("Generalized Linear Regression Model"),
+                            verbatimTextOutput("glm"),
+                            h3("Classification Tree Model"),
+                            verbatimTextOutput("ct"),
+                            plotOutput("ctPlot"),
+                            h3("Random Forest Model"),
+                            verbatimTextOutput("rf"),
+                            plotOutput("rfPlot")
                         ))
                     )    
                 ),
@@ -109,12 +130,13 @@ shinyUI(fluidPage(
                     sidebarLayout(
                         sidebarPanel(
                             selectizeInput("modelType", 
-                                            h5("Choose a Model Type:"),
-                                            selected = "Generalized Linear Regression Model",
-                                            choices = c("Generalized Linear Regression Model",
-                                                        "Classification Tree",
-                                                        "Random Forest")
+                                            h5("Model Type of Your Choice:"),
+                                            choices = c("Generalized Linear Regression Model" = "glm",
+                                                        "Classification Tree" = "class.tree",
+                                                        "Random Forest" = "ran.forest")
                             ),
+                            checkboxGroupInput("best", h5("Model Type by Accuracy:"),
+                                               choices = "Select Model with Best Prediction Accuracy!"),
                             checkboxGroupInput("modelVars", 
                                                 h5("Choose Predictors:"),
                                                 choices = c("Education",
@@ -127,10 +149,12 @@ shinyUI(fluidPage(
                                                 "ExperienceInCurrentDomain")
                             ),
                             br(),
-                            actionButton("Predict", "Make Prediction")
+                            actionButton("predict", "Make Prediction")
                         ),
                         mainPanel(fluidRow(
-                            verbatimTextOutput("pred") 
+                            tableOutput("predResult"),
+                            tableOutput("predSum"), 
+                            textOutput("predDes")
                         ))
                     )
                 )

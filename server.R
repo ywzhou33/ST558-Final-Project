@@ -239,22 +239,117 @@ shinyServer(function(input, output, session){
     })
     
     observeEvent(input$train, {
+        train <- getTraindata()
+        
+        ctrl <- trainControl(method = "cv", number = input$cv)
+        # train the GLM model
+        glm <- train(LeaveOrNot ~ ., data = train, method = "glm", 
+                     family = "binomial", preProcess =c("center", "scale"), 
+                     trControl = ctrl)
+        
+        ct.tGrid <- expand.grid(cp = seq(from = 0, to = 0.1, by = input$ctP))
+        # train the Classification Tree model
+        class.tree <- train(LeaveOrNot ~ ., data = train, 
+                            method = "rpart", trControl = ctrl, 
+                            preProcess = c("center", "scale"), 
+                            tuneGrid = ct.tGrid)
+        
+        rf.tGrid <- expand.grid(mtry = seq(from = 1, to = input$rfP, by = 1))
+        # train the Random Forest model
+        ran.forest <- train(LeaveOrNot ~ ., data = train, 
+                            method = "rf", trControl = ctrl, 
+                            preProcess = c("center", "scale"), 
+                            tuneGrid = rf.tGrid )
         if(input$train){
-#            if(length(input$modelVars) > 0){
-                output$glm <- renderPrint({
-                train <- getTraindata()
-#                df <- train[ , c(input$modelVars, "LeaveOrNot")]
-#                df <- df[complete.cases(x),]
-                ctrl <- trainControl(method = "cv", number = 10)
-                glm <- train(LeaveOrNot ~ ., data = train, method = "glm", 
-                             family = "binomial", preProcess =c("center", "scale"), 
-                             trControl = ctrl)
-                summary(glm)
+            output$glm <- renderPrint({
+                glm.sum <- summary(glm)
+                glm.sum$coefficients
             })
-#            } else {
-#                print("Input invalid! Please select at least one predictor variable to train the model!")
-#            }
-        } 
+            output$ct <- renderPrint({
+                class.tree$results
+            })
+            output$ctPlot <- renderPlot({
+                ggplot(class.tree)
+            })
+            output$rf <- renderPrint({
+                ran.forest$results
+            })
+            output$rfPlot <- renderPlot({
+                ggplot(ran.forest)
+            })
+            } else {
+                output$warning <- renderText({
+                    h3("Input invalid! Please select at least one predictor variable to train the model!", style = "color:red")
+                })
+                }
+    })
+    getCompare <- reactive({
+        test <- getTestdata()
+        test.glm <- confusionMatrix(data = test$LeaveOrNot, reference = predict(glm, newdata = test)) 
+        test.ct <- confusionMatrix(data = test$LeaveOrNot, reference = predict(class.tree, newdata = test)) 
+        test.rf <- confusionMatrix(data = test$LeaveOrNot, reference = predict(ran.forest, newdata = test))
+        
+        all.compare <- data.frame(Models= c("glm", "class.tree","ran.forest"), 
+                                  Accuracy = c(test.glm$overall[1],
+                                               test.ct$overall[1], 
+                                               test.rf$overall[1]))
+        all.compare
+    })
+    observeEvent(input$test,{
+#        output$head1 <- renderText(HTML(h3("Model Comparison Results")))
+        output$comTable <- renderTable({getCompare()})
+    })
+    
+    observeEvent(input$best, {
+        comp <- getCompare()
+        selectFit <- comp %>% filter(Accuracy == max(Accuracy))
+        updateSelectizeInput(session, "modelType", choices = c(selectFit[[1]]))
+    })
+    observeEvent(input$predict,{
+        test <- getTestdata()
+        if (input$modelType == "class.tree"){
+            output$predResult <- renderTable({
+                predict(class.tree, newdata = test, type = "prob")
+            }) 
+            output$predSum <- renderTable({
+                x <- summary(predict(class.tree, newdata = test))
+                x
+            }) 
+            output$predDes <- renderText({paste("With the selected predictors, the ",
+                                                input$modelType, 
+                                                "predicts that ", 
+                                                (x[2]/x[1])*100, 
+                                                "% of the current employees will leave the company in next two years.")
+            })
+        } else if (input$modelType == "ran.forest"){ # if box unchecked, then return to no color plot
+            output$predResult <- renderTable({
+                predict(ran.forest, newdata = test, type = "prob")
+            }) 
+            output$predSum <- renderTable({
+                x <- summary(predict(ran.forest, newdata = test))
+                x
+            }) 
+            output$predDes <- renderText({paste("With the selected predictors, the ",
+                                                input$modelType, 
+                                                "predicts that ", 
+                                                (x[2]/x[1])*100, 
+                                                "% of the current employees will leave the company in next two years.")
+            })
+        } else {
+            output$predResult <- renderTable({
+                predict(glm, newdata = test, type = "prob")
+            })
+            output$predSum <- renderTable({
+                x <- summary(predict(glm, newdata = test))
+                x
+            }) 
+            output$predDes <- renderText({paste("With the selected predictors, the ",
+                                                input$modelType, 
+                                                "predicts that ", 
+                                                (x[2]/x[1])*100, 
+                                                "% of the current employees will leave the company in next two years.")
+            })
+        }
     })
     
     getSubdata <- reactive({ 
