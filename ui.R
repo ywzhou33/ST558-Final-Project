@@ -12,6 +12,7 @@ shinyUI(fluidPage(
     withMathJax(),
     titlePanel("Employee Future Prediction"),
     tabsetPanel(
+        # get the about page
         tabPanel("About",
                  mainPanel(
                      h3("Purpose"),
@@ -23,12 +24,12 @@ shinyUI(fluidPage(
                      imageOutput("image")
                  )
         ),
+        # get the EDA page
         tabPanel("Data Exploration", fluid = TRUE,
             sidebarLayout(
                 sidebarPanel(
                     selectizeInput("var", 
                                    h5("Choose a variable of interest:"),
-                                   selected = "Gender",
                                    choices = c("Education",
                                                "JoiningYear",
                                                "City", 
@@ -36,15 +37,7 @@ shinyUI(fluidPage(
                                                "Gender",
                                                "EverBenched",
                                                "ExperienceInCurrentDomain")
-                    ),
-                    br(),
-                    radioButtons("butt1",
-                                 h5("Choose the file type to download the plot:"),
-                                 choices = list("png",
-                                                "pdf")
-                    ),
-                    br(),
-                    downloadButton("downloadPlotEDA", "Download Button")
+                    )
                 ),
                 mainPanel(fluidRow(
                     plotOutput("barPlot"),
@@ -130,10 +123,10 @@ shinyUI(fluidPage(
                     sidebarLayout(
                         sidebarPanel(
                             selectizeInput("modelType", 
-                                            h5("Model Type of Your Choice:"),
+                                            h5("Model Type:"),
                                             choices = c("Generalized Linear Regression Model" = "glm",
-                                                        "Classification Tree" = "class.tree",
-                                                        "Random Forest" = "ran.forest")
+                                                        "Classification Tree" = "classTree",
+                                                        "Random Forest" = "ranForest")
                             ),
                             checkboxGroupInput("best", h5("Model Type by Accuracy:"),
                                                choices = "Select Model with Best Prediction Accuracy!"),
@@ -152,8 +145,10 @@ shinyUI(fluidPage(
                             actionButton("predict", "Make Prediction")
                         ),
                         mainPanel(fluidRow(
-                            tableOutput("predResult"),
-                            tableOutput("predSum"), 
+                                    column(width = 3, "Prediction Results", 
+                                           tableOutput("predResult")), 
+                                    column(width = 4 , "Prediction Summary", 
+                                           tableOutput("predSum")),
                             textOutput("predDes")
                         ))
                     )

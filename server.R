@@ -313,13 +313,14 @@ shinyServer(function(input, output, session){
             }) 
             output$predSum <- renderTable({
                 x <- summary(predict(class.tree, newdata = test))
-                x
+                data.frame(Outcome = c("Employee leaves", "Employee Stay"),
+                           Counts = c(x[[2]], x[[1]]))
             }) 
-            output$predDes <- renderText({paste("With the selected predictors, the ",
-                                                input$modelType, 
-                                                "predicts that ", 
-                                                (x[2]/x[1])*100, 
-                                                "% of the current employees will leave the company in next two years.")
+            output$predDes <- renderText({
+                x <- summary(predict(class.tree, newdata = test))
+                paste("With the selected predictors, the Classification Tree Model predicts that ", 
+                      round((x[[2]]/(x[[1]]+x[[2]]))*100, 2), 
+                      "% of the current employees will leave the company in next two years.")
             })
         } else if (input$modelType == "ran.forest"){ # if box unchecked, then return to no color plot
             output$predResult <- renderTable({
@@ -327,13 +328,14 @@ shinyServer(function(input, output, session){
             }) 
             output$predSum <- renderTable({
                 x <- summary(predict(ran.forest, newdata = test))
-                x
+                data.frame(Outcome = c("Employee leaves", "Employee Stay"),
+                           Counts = c(x[[2]], x[[1]]))
             }) 
-            output$predDes <- renderText({paste("With the selected predictors, the ",
-                                                input$modelType, 
-                                                "predicts that ", 
-                                                (x[2]/x[1])*100, 
-                                                "% of the current employees will leave the company in next two years.")
+            output$predDes <- renderText({
+                x <- summary(predict(ran.forest, newdata = test))
+                paste("With the selected predictors, the Random Forest Model predicts that ", 
+                      round((x[[2]]/(x[[1]]+x[[2]]))*100, 2), 
+                      "% of the current employees will leave the company in next two years.")
             })
         } else {
             output$predResult <- renderTable({
@@ -341,13 +343,14 @@ shinyServer(function(input, output, session){
             })
             output$predSum <- renderTable({
                 x <- summary(predict(glm, newdata = test))
-                x
+                data.frame(Outcome = c("Employee leaves", "Employee Stay"),
+                           Counts = c(x[[2]], x[[1]]))
             }) 
-            output$predDes <- renderText({paste("With the selected predictors, the ",
-                                                input$modelType, 
-                                                "predicts that ", 
-                                                (x[2]/x[1])*100, 
-                                                "% of the current employees will leave the company in next two years.")
+            output$predDes <- renderText({
+                x <- summary(predict(glm, newdata = test))
+                paste("With the selected predictors, the Generalized Linear Regression Model predicts that ", 
+                      round((x[[2]]/(x[[1]]+x[[2]]))*100, 2), 
+                      "% of the current employees will leave the company in next two years.")
             })
         }
     })
