@@ -139,9 +139,6 @@ shinyUI(fluidPage(
                                                         "Classification Tree" = "classTree",
                                                         "Random Forest" = "ranForest")
                             ),
-                            # give user the option to use model with highest Accuracy
-                            checkboxGroupInput("best", h5("Model Type by Accuracy:"),
-                                               choices = "Select Model with Best Prediction Accuracy!"),
                             # give the option to select predictors for prediction
                             checkboxGroupInput("modelVars", 
                                                 h5("Choose Predictors:"),

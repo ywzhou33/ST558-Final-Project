@@ -331,23 +331,7 @@ shinyServer(function(input, output, session){
     observeEvent(input$test,{
         output$comTable <- renderTable({getCompare()})
     })
-    
-    # if checkbox is checked, then pick a model with highest or equivalent accuracy value
-    observeEvent(input$best, {
-        comp <- getCompare()
-        selectFit <- comp %>% filter(Accuracy == max(Accuracy))
-        if (input$best) {
-            updateSelectizeInput(session, "modelType", 
-                                 choices = c(selectFit[[1]]))
-        } else if (!input$best) {updateSelectizeInput(session, "modelType",
-                                                      choices = c("Generalized Linear Regression Model" = "glm",
-                                                                  "Classification Tree" = "classTree",
-                                                                  "Random Forest" = "ranForest"))
-            
-        }
-        
-    })
-    
+  
     # display the prediction results if the test action bottom is pressed 
     observeEvent(input$predict,{
         
