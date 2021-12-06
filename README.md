@@ -29,6 +29,5 @@ else if (!require('rpart')) {install.packages("rpart")}
 ### Code to run app
 
 ```{}
-shiny::runGitHub("ST558-Final-Project
-", "ywzhou33")
+shiny::runGitHub("ST558-Final-Project", "ywzhou33")
 ```
