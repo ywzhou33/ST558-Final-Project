@@ -7,6 +7,7 @@
 #    http://shiny.rstudio.com/
 #
 
+# List of Packages used
 library(shiny)
 library(DT) 
 library(dplyr)
@@ -19,12 +20,14 @@ library(rpart)
 
 shinyServer(function(input, output, session){
     
+    # get the full dataset
     getAlldata <- reactive({ 
         emp <- read.csv('Employee.csv')
         anyNA(emp)
         emp
     })
     
+    # get as factors to plot
     getPlotdata <- reactive({ 
         emp <- read.csv('Employee.csv')
         emp$LeaveOrNot <- as.factor(emp$LeaveOrNot)
@@ -38,10 +41,11 @@ shinyServer(function(input, output, session){
         emp
     })
     
+    # intro on About page
     output$text1 <- renderText({
         p1 <- ("A company's HR department is interested in predicting the future of their employees -- whether the employee leaves the company.")
     })
-    
+    # dataset source background on About page
     output$text2 <- renderText({
         p2 <- ("The dataset Employee.csv contains information about this company's past and current employees. There are 9 columns in this dataset.")
         url <- "https://www.kaggle.com/tejashvi14/employee-future-prediction?select=Employee.csv"
@@ -59,7 +63,7 @@ shinyServer(function(input, output, session){
         <li>LeaveOrNot - Whether the employee leaves the company</li>
         </ul>", "<br/> <br/>", link)
         })
-    
+    # intro for purpose of each tap
     output$tab <- renderText({
         p3 <- ("For each tab page of this app: ")
         HTML(paste(p3, sep = '<br/> <br/>'), "<br/> <br/>",
@@ -71,6 +75,7 @@ shinyServer(function(input, output, session){
         </ul>")
     })
     
+    # display an image on About page
     output$image <- renderImage({
         filename <- normalizePath(file.path('aboutImage.png'))
         list(src = filename)
@@ -78,42 +83,41 @@ shinyServer(function(input, output, session){
     
     # Get the barPlot with logic statements
     output$barPlot <- renderPlot({
-        barplot.d <- getPlotdata()
+        barplotD <- getPlotdata()
         if (input$var == "Gender") {
-            ggplot(data = barplot.d, aes(x = Gender)) + 
+            ggplot(data = barplotD, aes(x = Gender)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         } else if (input$var == "Education") {
-            ggplot(data = barplot.d, aes(x = Education)) + 
+            ggplot(data = barplotD, aes(x = Education)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         } else if (input$var == "JoiningYear") {
-            ggplot(data = barplot.d, aes(x = JoiningYear)) + 
+            ggplot(data = barplotD, aes(x = JoiningYear)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         } else if (input$var == "City") {
-            ggplot(data = barplot.d, aes(x = City)) + 
+            ggplot(data = barplotD, aes(x = City)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         } else if (input$var == "PaymentTier") {
-            ggplot(data = barplot.d, aes(x = PaymentTier)) + 
+            ggplot(data = barplotD, aes(x = PaymentTier)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         } else if (input$var == "EverBenched") {
-            ggplot(data = barplot.d, aes(x = EverBenched)) + 
+            ggplot(data = barplotD, aes(x = EverBenched)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         } else {
-            ggplot(data = barplot.d, aes(x = ExperienceInCurrentDomain)) + 
+            ggplot(data = barplotD, aes(x = ExperienceInCurrentDomain)) + 
                 geom_bar(aes(fill = LeaveOrNot), position = "dodge") +
                 scale_fill_discrete()
         }
     })
     
+    # get the statistic summary table
     output$statSum <- renderTable({
-        
         data <- getAlldata()
-        # Get inputs from ui.R
         var <- input$var
         
         emp_stat <- 
@@ -124,6 +128,7 @@ shinyServer(function(input, output, session){
         emp_stat
     })
     
+    # get GLM information for the model intro tab
     output$glmDes <- renderText({
         glm <- ("Generalized Linear Regression Model allows for responses from non-normal distributions and it also allows for both continuous and categorical predictors. This data is predicted by Logistic Generalized Linear Regression Model, which the response is in 0 or 1, 1 for success (employee leaves the company) and 0 for failure (employee do not leave the company). Therefore the prediction values are also between 0 and 1, representing the probability of whether the employee leaves the company.")
         HTML(paste(glm, sep = '<br/> <br/>'), "<br/> <br/>", 
@@ -148,13 +153,13 @@ shinyServer(function(input, output, session){
               <li>Unable to account for dependency.</li>
               </ul>", "<br/> <br/>",)
     })
-    
+    # get example GLM equation with MathJax
     output$glmFunc <- renderUI({
         withMathJax(
             helpText('GLM Example: $$Ln(Y) = \\beta_{0}\\ + \\beta_{1}x_{1}\\ + \\dots\\ + \\beta_{k}x_{k}\\ + e$$')
         )
     })
-    
+    # get Classification Tree information for the model intro tab
     output$ctDes <- renderText({
         ct <- ("The Classification Tree is a tree-based model that make prediction based on decision tree, which allows categorical response and predicts class membership (0 or 1) or probability of membership (between 0 and 1). For fitting classification trees, the residual sum of squares is not good for splits, we should use Gini index or entropy/deviance instead. The criteria is to choose nodes with cv, and nodes classifies well if p is near 0 or 1. ")
         HTML(paste(ct, sep = '<br/> <br/>'), "<br/> <br/>", 
@@ -175,6 +180,7 @@ shinyServer(function(input, output, session){
               </ul>", "<br/> <br/>",)
     })
     
+    # show visual example of classification tree
     output$ctImage <- renderImage({
         filename <- normalizePath(file.path('ctImage.jpg'))
         list(src = filename, 
@@ -183,6 +189,7 @@ shinyServer(function(input, output, session){
              align="center")
     }, deleteFile = FALSE)
     
+    # get Random Forest Model information for the model intro tab
     output$rfDes <- renderText({
         rf <- ("Random Forest is an ensemble tree-based model that helps to solve regression and classification problems. Its algorithm consists of a collection of decision trees, which its forest is generated and train through a bootstrapped aggregation that use a random subset of predictors for each bootstrap tree fit, expanding the forest improves its precision. The model choosing criteria is to start the first split on strong predictor, then use m = sqrt(p) for classification and m=p/3 for regression to randomly selected predictors. The value of m is determined through OOB error.")
         HTML(paste(rf, sep = '<br/> <br/>'), "<br/> <br/>", 
@@ -203,6 +210,7 @@ shinyServer(function(input, output, session){
               </ul>", "<br/> <br/>",)
     })
     
+    #show visual example of random forest
     output$rfImage <- renderImage({
         filename <- normalizePath(file.path('rfImage.png'))
         list(src = filename, 
@@ -211,6 +219,7 @@ shinyServer(function(input, output, session){
              align="center")
     }, deleteFile = FALSE)
     
+    # get the train data set
     getTraindata <- reactive({ 
         emp <- read.csv('Employee.csv')
         emp$LeaveOrNot <- as.factor(emp$LeaveOrNot)
@@ -222,8 +231,10 @@ shinyServer(function(input, output, session){
         set.seed(234)
         index <- createDataPartition(y = emp$LeaveOrNot, p = input$prop, list = F)
         train <- emp[index, ] # training set
+        train
     })
     
+    # get the test data set
     getTestdata <- reactive({ 
         emp <- read.csv('Employee.csv')
         emp$LeaveOrNot <- as.factor(emp$LeaveOrNot)
@@ -236,103 +247,141 @@ shinyServer(function(input, output, session){
         set.seed(234)
         index <- createDataPartition(y = emp$LeaveOrNot, p = input$prop, list = F)
         test <- emp[-index, ] # test set
+        test
     })
-    
-    observeEvent(input$train, {
+
+    getFglm <- reactive({ 
         train <- getTraindata()
-        
+        set.seed(345)
         ctrl <- trainControl(method = "cv", number = input$cv)
         # train the GLM model
-        glm <- train(LeaveOrNot ~ ., data = train, method = "glm", 
-                     family = "binomial", preProcess =c("center", "scale"), 
-                     trControl = ctrl)
-        
-        ct.tGrid <- expand.grid(cp = seq(from = 0, to = 0.1, by = input$ctP))
+        glm <- train(as.formula(paste("LeaveOrNot ~ ", paste(input$modelVars, collapse = "+"))), 
+                     data = train, method = "glm", family = "binomial", 
+                     preProcess =c("center", "scale"), trControl = ctrl)
+        glm
+    })
+    
+    getFct <- reactive({ 
+        train <- getTraindata()
+        ctGrid <- expand.grid(cp = seq(from = 0, to = 0.1, by = input$ctP))
         # train the Classification Tree model
-        class.tree <- train(LeaveOrNot ~ ., data = train, 
-                            method = "rpart", trControl = ctrl, 
-                            preProcess = c("center", "scale"), 
-                            tuneGrid = ct.tGrid)
-        
-        rf.tGrid <- expand.grid(mtry = seq(from = 1, to = input$rfP, by = 1))
+        classTree <- train(as.formula(paste("LeaveOrNot ~ ", paste(input$modelVars, collapse = "+"))), 
+                           data = train, method = "rpart", trControl = ctrl, 
+                           preProcess = c("center", "scale"), tuneGrid = ctGrid)
+        classTree
+    })
+    
+    getFrf <- reactive({ 
+        rfGrid <- expand.grid(mtry = seq(from = 1, to = input$rfP, by = 1))
         # train the Random Forest model
-        ran.forest <- train(LeaveOrNot ~ ., data = train, 
-                            method = "rf", trControl = ctrl, 
-                            preProcess = c("center", "scale"), 
-                            tuneGrid = rf.tGrid )
+        ranForest <- train(as.formula(paste("LeaveOrNot ~ ", paste(input$modelVars, collapse = "+"))), 
+                           data = train, method = "rf", trControl = ctrl, 
+                           preProcess = c("center", "scale"), tuneGrid = rfGrid )
+        ranForest
+    })
+    # if the train action bottom is pressed then return the results and plots for all three models
+    observeEvent(input$train, {
+        
+        train <- getTraindata()
+        glm <- getFglm()
+        classTree <- getFct()
+        ranForest <- getFrf()
+        
         if(input$train){
+            # GLM model
             output$glm <- renderPrint({
-                glm.sum <- summary(glm)
-                glm.sum$coefficients
+                glmSum <- summary(glm)
+                glmSum$coefficients
             })
+            # Clssification Tree model
             output$ct <- renderPrint({
-                class.tree$results
+                classTree$results
             })
             output$ctPlot <- renderPlot({
-                ggplot(class.tree)
+                ggplot(classTree)
             })
+            # Random Forest model
             output$rf <- renderPrint({
-                ran.forest$results
+                ranForest$results
             })
             output$rfPlot <- renderPlot({
-                ggplot(ran.forest)
+                ggplot(ranForest)
             })
-            } else {
-                output$warning <- renderText({
-                    h3("Input invalid! Please select at least one predictor variable to train the model!", style = "color:red")
-                })
-                }
+            }
     })
+    # get the model comparing dataframe
     getCompare <- reactive({
-        test <- getTestdata()
-        test.glm <- confusionMatrix(data = test$LeaveOrNot, reference = predict(glm, newdata = test)) 
-        test.ct <- confusionMatrix(data = test$LeaveOrNot, reference = predict(class.tree, newdata = test)) 
-        test.rf <- confusionMatrix(data = test$LeaveOrNot, reference = predict(ran.forest, newdata = test))
         
-        all.compare <- data.frame(Models= c("glm", "class.tree","ran.forest"), 
-                                  Accuracy = c(test.glm$overall[1],
-                                               test.ct$overall[1], 
-                                               test.rf$overall[1]))
-        all.compare
+        test <- getTestdata()
+        glm <- getFglm()
+        classTree <- getFct()
+        ranForest <- getFrf()
+        
+        testglm <- confusionMatrix(data = test$LeaveOrNot, reference = predict(glm, newdata = test)) 
+        testct <- confusionMatrix(data = test$LeaveOrNot, reference = predict(classTree, newdata = test)) 
+        testrf <- confusionMatrix(data = test$LeaveOrNot, reference = predict(ranForest, newdata = test))
+        
+        allCompare <- data.frame(Models= c("glm", "classTree","ranForest"), 
+                                  Accuracy = c(testglm$overall[1],
+                                               testct$overall[1], 
+                                               testrf$overall[1]))
+        allCompare
     })
+    # display the model comparing dataframe if the test action bottom is pressed 
     observeEvent(input$test,{
-#        output$head1 <- renderText(HTML(h3("Model Comparison Results")))
         output$comTable <- renderTable({getCompare()})
     })
     
+    # if checkbox is checked, then pick a model with highest or equivalent accuracy value
     observeEvent(input$best, {
         comp <- getCompare()
         selectFit <- comp %>% filter(Accuracy == max(Accuracy))
-        updateSelectizeInput(session, "modelType", choices = c(selectFit[[1]]))
+        if (input$best) {
+            updateSelectizeInput(session, "modelType", 
+                                 choices = c(selectFit[[1]]))
+        } else if (!input$best) {updateSelectizeInput(session, "modelType",
+                                                      choices = c("Generalized Linear Regression Model" = "glm",
+                                                                  "Classification Tree" = "classTree",
+                                                                  "Random Forest" = "ranForest"))
+            
+        }
+        
     })
+    
+    # display the prediction results if the test action bottom is pressed 
     observeEvent(input$predict,{
+        
         test <- getTestdata()
-        if (input$modelType == "class.tree"){
+        glm <- getFglm()
+        classTree <- getFct()
+        ranForest <- getFrf()
+        
+        if (input$modelType == "classTree"){
             output$predResult <- renderTable({
-                predict(class.tree, newdata = test, type = "prob")
+                predict(classTree, newdata = test, type = "prob")
             }) 
             output$predSum <- renderTable({
-                x <- summary(predict(class.tree, newdata = test))
+                x <- summary(predict(classTree, newdata = test))
                 data.frame(Outcome = c("Employee leaves", "Employee Stay"),
                            Counts = c(x[[2]], x[[1]]))
             }) 
             output$predDes <- renderText({
-                x <- summary(predict(class.tree, newdata = test))
+                x <- summary(predict(classTree, newdata = test))
                 paste("With the selected predictors, the Classification Tree Model predicts that ", 
                       round((x[[2]]/(x[[1]]+x[[2]]))*100, 2), 
                       "% of the current employees will leave the company in next two years.")
             })
-        } else if (input$modelType == "ran.forest"){ # if box unchecked, then return to no color plot
+        } else if (input$modelType == "ranForest"){ 
             output$predResult <- renderTable({
-                predict(ran.forest, newdata = test, type = "prob")
+                predict(ranForest, newdata = test, type = "prob")
             }) 
             output$predSum <- renderTable({
-                x <- summary(predict(ran.forest, newdata = test))
+                x <- summary(predict(ranForest, newdata = test))
                 data.frame(Outcome = c("Employee leaves", "Employee Stay"),
                            Counts = c(x[[2]], x[[1]]))
             }) 
             output$predDes <- renderText({
-                x <- summary(predict(ran.forest, newdata = test))
+                x <- summary(predict(ranForest, newdata = test))
                 paste("With the selected predictors, the Random Forest Model predicts that ", 
                       round((x[[2]]/(x[[1]]+x[[2]]))*100, 2), 
                       "% of the current employees will leave the company in next two years.")
@@ -355,14 +404,17 @@ shinyServer(function(input, output, session){
         }
     })
     
+    # get the sub data to download
     getSubdata <- reactive({ 
         emp <- getAlldata()
         subdata <- emp %>% filter(PaymentTier == input$varType)
         subdata
     })
     
+    # if user choose subset data, then the subset will be displayed and available for download
+    # default it to display and download the full dataset.
     observeEvent(input$subset, {
-        if (input$subset) { 
+        if (input$subset) { # subset
             output$dataTable <- renderDataTable({
                 getSubdata()
             })
@@ -374,7 +426,7 @@ shinyServer(function(input, output, session){
                     write.csv(getSubdata(), file, row.names = FALSE)
                 }
             )
-        } else {
+        } else { # full dataset.
             output$dataTable <- renderDataTable({
                 getAlldata()
             })

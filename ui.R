@@ -40,14 +40,16 @@ shinyUI(fluidPage(
                     )
                 ),
                 mainPanel(fluidRow(
-                    plotOutput("barPlot"),
+                    plotOutput("barPlot"), # display a barplot
                     br(),
-                    tableOutput("statSum")
+                    tableOutput("statSum") #display statistical summary on slected variable.
                 ))
             )
         ),
+        # setup the Modeling page
         tabPanel("Modeling", fluid = TRUE,
             tabsetPanel(
+                # 1st sub-page about Model Information
                 tabPanel("Modeling Information", fluid = TRUE,
                     mainPanel(
                     h3("Generalized Linear Regression Model"),
@@ -61,26 +63,31 @@ shinyUI(fluidPage(
                     imageOutput("rfImage")
                     )    
                 ),
+                # 2nd sub-page about Model Fitting
                 tabPanel("Model Fitting", fluid = TRUE,
                     sidebarLayout(
                         sidebarPanel(
+                            # setup input to decide the proportion to split
                             sliderInput("prop",
-                                        "Select the Proportion of data to split:",
+                                        "Select the proportion of data to split:",
                                         min = 0,
                                         max = 1,
                                         step = 0.05,
                                         value = 0.75),
                             br(),
+                            # setup number input for cross validation
                             sliderInput("cv", 
                                         h5("Select the number of folds for Cross Validation:"),
                                         min = 3,
                                         max = 10,
                                         value = 10),
                             br(),
+                            # setup tuning parameter for Classification Tree 
                             numericInput("ctP", 
                                          h5("Enter values of tuning parameter for Classification Tree"),
                                          min = 0.001, max = 0.1, value = 0.001),
                             br(),
+                            # setup tuning parameter for Randon Forest
                             sliderInput("rfP", 
                                         h5("Select the number of tuning parameter for Randon Forest"),
                                         min = 3,
@@ -88,6 +95,7 @@ shinyUI(fluidPage(
                                         step = 1,
                                         value = 3),
                             br(),
+                            # give the option to select predictors for the model fits
                             checkboxGroupInput("modelVars", 
                                                 h5("Choose Predictors:"),
                                                 choices = c("Education",
@@ -100,13 +108,14 @@ shinyUI(fluidPage(
                                                 "ExperienceInCurrentDomain")
                             ),
                             br(),
-                            actionButton("train", "Train Model"),
+                            h5("Click to train model"),
+                            actionButton("train", "Train Model"), # click to train model
                             br(),
-                            actionButton("test", "Test and Compare Models")
+                            h5("Click to test model performance"),
+                            actionButton("test", "Test and Compare Models") # click to test model performance
                         ),
+                        # display all three model fit summaries on the main Panel
                         mainPanel(fluidRow(
-                            textOutput("warning"),
-                            htmlOutput("head1"),
                             tableOutput("comTable"),
                             h3("Generalized Linear Regression Model"),
                             verbatimTextOutput("glm"),
@@ -119,17 +128,21 @@ shinyUI(fluidPage(
                         ))
                     )    
                 ),
+                # 3rd sub-page about Model Prediction
                 tabPanel("Prediction", fluid = TRUE,
                     sidebarLayout(
                         sidebarPanel(
+                            # give user the option to choose which model to use for prediction
                             selectizeInput("modelType", 
                                             h5("Model Type:"),
                                             choices = c("Generalized Linear Regression Model" = "glm",
                                                         "Classification Tree" = "classTree",
                                                         "Random Forest" = "ranForest")
                             ),
+                            # give user the option to use model with highest Accuracy
                             checkboxGroupInput("best", h5("Model Type by Accuracy:"),
                                                choices = "Select Model with Best Prediction Accuracy!"),
+                            # give the option to select predictors for prediction
                             checkboxGroupInput("modelVars", 
                                                 h5("Choose Predictors:"),
                                                 choices = c("Education",
@@ -142,8 +155,10 @@ shinyUI(fluidPage(
                                                 "ExperienceInCurrentDomain")
                             ),
                             br(),
-                            actionButton("predict", "Make Prediction")
+                            h5("Click to make prediction"),
+                            actionButton("predict", "Make Prediction") # click to make prediction
                         ),
+                        # display prediciton results 
                         mainPanel(fluidRow(
                                     column(width = 3, "Prediction Results", 
                                            tableOutput("predResult")), 
@@ -155,12 +170,15 @@ shinyUI(fluidPage(
                 )
             )
         ),
+        # setup the Dataset page
         tabPanel("Dateset", fluid = TRUE,
             sidebarLayout(
                 sidebarPanel(
+                    # give user the option to subset data based on Payment Tier
                     checkboxInput("subset", h5("Subset data on Payment Tier")
                     ),
                     br(),
+                    # choose PaymentTier value to subset
                     conditionalPanel(condition = "input.subset", 
                                      selectizeInput("varType",
                                                     h5("Choose a variable Type to filter data table:"),
@@ -170,8 +188,10 @@ shinyUI(fluidPage(
                                      
                     ),
                     br(),
+                    # allow download of both full and subset data
                     downloadButton("downloadData", "Download Data Table")
                 ),
+                # display data table
                 mainPanel(fluidRow(
                     dataTableOutput("dataTable")
                 ))
