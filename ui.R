@@ -93,7 +93,7 @@ shinyUI(fluidPage(
                                         min = 3,
                                         max = 15,
                                         step = 1,
-                                        value = 3),
+                                        value = 7),
                             br(),
                             # give the option to select predictors for the model fits
                             checkboxGroupInput("modelVars", 
